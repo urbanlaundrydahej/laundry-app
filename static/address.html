@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pickup Address - Laundry App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background:#f8f9fa;
+    }
+    .header {
+      background:#198754;
+      color:white;
+      padding:14px;
+      text-align:center;
+      font-size:18px;
+      font-weight:600;
+    }
+    .card-box {
+      background:white;
+      border-radius:12px;
+      padding:20px;
+      margin-top:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+    .footer-bar {
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      background:white;
+      border-top:1px solid #ddd;
+      padding:12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    Pickup Address
+  </div>
+
+  <div class="container mb-5">
+
+    <div class="card-box">
+
+      <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-control" id="name" placeholder="Your name (optional)">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">House / Flat No *</label>
+        <input type="text" class="form-control" id="house" placeholder="House / Flat number">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Area / Landmark *</label>
+        <input type="text" class="form-control" id="area" placeholder="Area or nearby landmark">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">City *</label>
+        <input type="text" class="form-control" id="city" placeholder="City">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Pincode *</label>
+        <input type="number" class="form-control" id="pincode" placeholder="Pincode">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-bar">
+    <button class="btn btn-success w-100" onclick="placeOrder()">
+      Place Order
+    </button>
+  </div>
+
+<script>
+function placeOrder() {
+  const house = houseEl.value;
+  const area = areaEl.value;
+  const city = cityEl.value;
+  const pincode = pincodeEl.value;
+
+  if (!house || !area || !city || !pincode) {
+    alert("Fill all required fields");
+    return;
+  }
+
+  const order = {
+    phone: localStorage.getItem("phone"),
+    address: `${house}, ${area}, ${city} - ${pincode}`,
+    items: JSON.parse(localStorage.getItem("cart")),
+    pickup_date: localStorage.getItem("pickup_date"),
+    pickup_slot: localStorage.getItem("pickup_slot")
+  };
+
+  fetch("/place_order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(order)
+  })
+  .then(() => {
+    localStorage.clear();
+    window.location.href = "/static/success.html";
+  });
+}
+
+const houseEl = document.getElementById("house");
+const areaEl = document.getElementById("area");
+const cityEl = document.getElementById("city");
+const pincodeEl = document.getElementById("pincode");
+</script>
+
+</body>
+</html>
