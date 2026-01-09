@@ -7,6 +7,11 @@ from datetime import datetime
 from twilio.rest import Client
 import os
 
+TWILIO_SID = os.environ.get("TWILIO_SID")
+TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
+WHATSAPP_FROM = "whatsapp:+14155238886"   # Twilio sandbox
+WHATSAPP_TO = "whatsapp:+91XXXXXXXXXX"   # YOUR laundry number
+
 app = FastAPI()
 
 # CORS
@@ -144,6 +149,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
