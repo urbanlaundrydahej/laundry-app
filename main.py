@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import sqlite3
 from datetime import datetime
+from twilio.rest import Client
+import os
 
 app = FastAPI()
 
@@ -142,5 +144,6 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
