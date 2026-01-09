@@ -50,17 +50,18 @@ conn.commit()
 
 # ---------- APIs ----------
 def send_whatsapp(order):
-    if not TWILIO_SID or not TWILIO_TOKEN:
-        print("WhatsApp not configured")
+    if not TWILIO_SID or not TWILIO_TOKEN or not WHATSAPP_TO:
+        print("WhatsApp not configured properly")
         return
 
-    client = Client(TWILIO_SID, TWILIO_TOKEN)
+    try:
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
 
-    items_text = ""
-    for i in order["items"].values():
-        items_text += f'{i["name"]} x{i["qty"]}\n'
+        items_text = ""
+        for i in order["items"].values():
+            items_text += f'{i["name"]} x{i["qty"]}\n'
 
-    message = f"""
+        message = f"""
 🧺 New Laundry Order
 
 Items:
@@ -75,11 +76,17 @@ Address:
 Payment: COD
 """
 
-    client.messages.create(
-        body=message,
-        from_=WHATSAPP_FROM,
-        to=WHATSAPP_TO
-    )
+        client.messages.create(
+            body=message,
+            from_=WHATSAPP_FROM,
+            to=WHATSAPP_TO
+        )
+
+        print("WhatsApp sent successfully")
+
+    except Exception as e:
+        print("WhatsApp error:", e)
+
 
 @app.post("/place_order")
 def place_order(order: dict):
@@ -182,6 +189,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
