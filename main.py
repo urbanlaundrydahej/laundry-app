@@ -9,7 +9,7 @@ import os
 
 TWILIO_SID = os.environ.get("TWILIO_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
-WHATSAPP_FROM = "whatsapp:+15707125048"   # Twilio sandbox
+WHATSAPP_FROM = "whatsapp:+14155238886"   # Twilio sandbox
 WHATSAPP_TO = os.environ.get("WHATSAPP_TO")  # YOUR laundry number
 
 app = FastAPI()
@@ -189,6 +189,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
