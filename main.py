@@ -9,8 +9,8 @@ import os
 
 TWILIO_SID = os.environ.get("TWILIO_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
-WHATSAPP_FROM = "whatsapp:+14155238886"   # Twilio sandbox
-WHATSAPP_TO = "whatsapp:+91XXXXXXXXXX"   # YOUR laundry number
+WHATSAPP_FROM = "whatsapp:+15707125048"   # Twilio sandbox
+WHATSAPP_TO = "whatsapp:+919713079285"   # YOUR laundry number
 
 app = FastAPI()
 
@@ -49,6 +49,37 @@ CREATE TABLE IF NOT EXISTS orders (
 conn.commit()
 
 # ---------- APIs ----------
+def send_whatsapp(order):
+    if not TWILIO_SID or not TWILIO_TOKEN:
+        print("WhatsApp not configured")
+        return
+
+    client = Client(TWILIO_SID, TWILIO_TOKEN)
+
+    items_text = ""
+    for i in order["items"].values():
+        items_text += f'{i["name"]} x{i["qty"]}\n'
+
+    message = f"""
+🧺 New Laundry Order
+
+Items:
+{items_text}
+
+Pickup:
+{order["pickup_date"]} | {order["pickup_slot"]}
+
+Address:
+{order["address"]}
+
+Payment: COD
+"""
+
+    client.messages.create(
+        body=message,
+        from_=WHATSAPP_FROM,
+        to=WHATSAPP_TO
+    )
 
 @app.post("/place_order")
 def place_order(order: dict):
@@ -68,6 +99,8 @@ def place_order(order: dict):
         datetime.now().isoformat()
     ))
     conn.commit()
+
+    send_whatsapp(order)   # 👈 ADD THIS LINE
 
     return {"message": "Order placed"}
 
@@ -149,6 +182,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
