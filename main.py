@@ -132,26 +132,19 @@ Payment:
 @app.post("/create_payment")
 def create_payment(data: dict):
 
-    if not razor_client:
-        return {"error": "Payment not configured"}
+    print("FRONTEND AMOUNT:", data)   # DEBUG
 
-    try:
-        print("FRONTEND AMOUNT:", data["amount"])  # debug
+    amount = int(data["amount"]) * 100
 
-        amount = int(data["amount"]) * 100  # convert to paise
+    print("RAZORPAY AMOUNT:", amount) # DEBUG
 
-        print("RAZORPAY AMOUNT:", amount)   # debug
+    order = razor_client.order.create({
+        "amount": amount,
+        "currency": "INR",
+        "payment_capture": 1
+    })
 
-        order = razor_client.order.create({
-            "amount": amount,
-            "currency": "INR",
-            "payment_capture": 1
-        })
-
-        return order
-
-    except Exception as e:
-        return {"error": str(e)}
+    return order
 
 
 # ---------------- ORDERS ----------------
@@ -241,6 +234,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
