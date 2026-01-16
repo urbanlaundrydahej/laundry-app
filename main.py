@@ -10,21 +10,19 @@ import razorpay
 
 # ---------------- CONFIG ----------------
 
-RAZORPAY_KEY_ID = os.environ.get("rzp_live_S4Sq8zIR6ztzan")
-RAZORPAY_KEY_SECRET = os.environ.get("PeSSCiHUbHMLudERgDiNdE9q")
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET")
 
 TWILIO_SID = os.environ.get("TWILIO_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
-WHATSAPP_FROM = "whatsapp:+14155238886"   # Twilio sandbox
-WHATSAPP_TO = os.environ.get("+919713079285")
+WHATSAPP_FROM = "whatsapp:+14155238886"
+WHATSAPP_TO = os.environ.get("WHATSAPP_TO")
 
-# Razorpay client
 razor_client = None
 if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
     razor_client = razorpay.Client(
         auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)
     )
-
 # ---------------- APP ----------------
 
 app = FastAPI()
@@ -234,6 +232,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
