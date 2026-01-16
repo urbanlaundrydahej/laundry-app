@@ -136,7 +136,11 @@ def create_payment(data: dict):
         return {"error": "Payment not configured"}
 
     try:
-        amount = int(data["amount"]) * 100
+        print("FRONTEND AMOUNT:", data["amount"])  # debug
+
+        amount = int(data["amount"]) * 100  # convert to paise
+
+        print("RAZORPAY AMOUNT:", amount)   # debug
 
         order = razor_client.order.create({
             "amount": amount,
@@ -148,6 +152,7 @@ def create_payment(data: dict):
 
     except Exception as e:
         return {"error": str(e)}
+
 
 # ---------------- ORDERS ----------------
 
@@ -236,5 +241,6 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
