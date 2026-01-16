@@ -116,7 +116,7 @@ def place_order(order: dict):
     conn.commit()
 
     send_whatsapp(order)   # 👈 ADD THIS LINE
-
+    payment_id = order.get("payment_id", "COD")
     return {"message": "Order placed"}
 
 @app.get("/orders")
@@ -209,6 +209,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
