@@ -8,21 +8,27 @@ from twilio.rest import Client
 import os
 import razorpay
 
+# ---------------- CONFIG ----------------
+
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET")
-
-razor_client = razorpay.Client(
-    auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)
-)
 
 TWILIO_SID = os.environ.get("TWILIO_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
 WHATSAPP_FROM = "whatsapp:+14155238886"   # Twilio sandbox
-WHATSAPP_TO = os.environ.get("WHATSAPP_TO")  # YOUR laundry number
+WHATSAPP_TO = os.environ.get("WHATSAPP_TO")
+
+# Razorpay client
+razor_client = None
+if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
+    razor_client = razorpay.Client(
+        auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)
+    )
+
+# ---------------- APP ----------------
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,15 +36,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files at /static
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Home page
 @app.get("/")
 def home():
     return FileResponse("static/index.html")
 
-# Database
+# ---------------- DATABASE ----------------
+
 conn = sqlite3.connect("database.db", check_same_thread=False)
 cur = conn.cursor()
 
@@ -51,15 +56,39 @@ CREATE TABLE IF NOT EXISTS orders (
     pickup_date TEXT,
     pickup_slot TEXT,
     status TEXT,
-    created_at TEXT
+    created_at TEXT,
+    payment_id TEXT
 )
 """)
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+)
+""")
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    price INTEGER,
+    active INTEGER
+)
+""")
+
+cur.execute("""
+INSERT OR IGNORE INTO settings (key, value)
+VALUES ('laundry_name', 'Urban Laundry')
+""")
+
 conn.commit()
 
-# ---------- APIs ----------
+# ---------------- WHATSAPP ----------------
+
 def send_whatsapp(order):
     if not TWILIO_SID or not TWILIO_TOKEN or not WHATSAPP_TO:
-        print("WhatsApp not configured properly")
+        print("WhatsApp not configured")
         return
 
     try:
@@ -68,6 +97,8 @@ def send_whatsapp(order):
         items_text = ""
         for i in order["items"].values():
             items_text += f'{i["name"]} x{i["qty"]}\n'
+
+        payment = order.get("payment_id", "COD")
 
         message = f"""
 🧺 New Laundry Order
@@ -81,7 +112,8 @@ Pickup:
 Address:
 {order["address"]}
 
-Payment: COD
+Payment:
+{"UPI Paid" if payment != "COD" else "Cash on Delivery"}
 """
 
         client.messages.create(
@@ -90,20 +122,47 @@ Payment: COD
             to=WHATSAPP_TO
         )
 
-        print("WhatsApp sent successfully")
+        print("WhatsApp sent")
 
     except Exception as e:
         print("WhatsApp error:", e)
 
+# ---------------- PAYMENTS ----------------
+
+@app.post("/create_payment")
+def create_payment(data: dict):
+
+    if not razor_client:
+        return {"error": "Payment not configured"}
+
+    try:
+        amount = int(data["amount"]) * 100
+
+        order = razor_client.order.create({
+            "amount": amount,
+            "currency": "INR",
+            "payment_capture": 1
+        })
+
+        return order
+
+    except Exception as e:
+        return {"error": str(e)}
+
+# ---------------- ORDERS ----------------
 
 @app.post("/place_order")
 def place_order(order: dict):
+
     print("ORDER RECEIVED:", order)
+
+    payment_id = order.get("payment_id", "COD")
 
     cur.execute("""
         INSERT INTO orders
-        (phone, address, items, pickup_date, pickup_slot, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (phone, address, items, pickup_date, pickup_slot,
+         status, created_at, payment_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         order["phone"],
         order["address"],
@@ -111,30 +170,20 @@ def place_order(order: dict):
         order["pickup_date"],
         order["pickup_slot"],
         "PLACED",
-        datetime.now().isoformat()
+        datetime.now().isoformat(),
+        payment_id
     ))
+
     conn.commit()
 
-    send_whatsapp(order)   # 👈 ADD THIS LINE
-    payment_id = order.get("payment_id", "COD")
-    return {"message": "Order placed"}
+    send_whatsapp(order)
+
+    return {"message": "Order placed successfully"}
 
 @app.get("/orders")
 def get_orders():
     cur.execute("SELECT * FROM orders ORDER BY id DESC")
     return cur.fetchall()
-
-@app.post("/create_payment")
-def create_payment(data: dict):
-    amount = int(data["amount"]) * 100  # paise
-
-    order = razor_client.order.create({
-        "amount": amount,
-        "currency": "INR",
-        "payment_capture": 1
-    })
-
-    return order
 
 @app.post("/update_status")
 def update_status(data: dict):
@@ -145,30 +194,7 @@ def update_status(data: dict):
     conn.commit()
     return {"message": "Status updated"}
 
-# Settings table
-cur.execute("""
-CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-)
-""")
-
-# Items table
-cur.execute("""
-CREATE TABLE IF NOT EXISTS items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    price INTEGER,
-    active INTEGER
-)
-""")
-conn.commit()
-
-# Default laundry name (run once)
-cur.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('laundry_name', 'Urban Laundry')")
-conn.commit()
-
-# -------- SETTINGS APIs --------
+# ---------------- SETTINGS ----------------
 
 @app.get("/settings")
 def get_settings():
@@ -195,7 +221,8 @@ def update_laundry_name(data: dict):
 @app.post("/items/add")
 def add_item(data: dict):
     cur.execute(
-        "INSERT INTO items (name, price, active) VALUES (?, ?, 1)",
+        "INSERT INTO items (name, price, active)
+         VALUES (?, ?, 1)",
         (data["name"], data["price"])
     )
     conn.commit()
@@ -209,13 +236,3 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
-
-
-
-
-
-
-
-
-
-
