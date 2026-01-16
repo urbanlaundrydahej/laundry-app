@@ -10,13 +10,13 @@ import razorpay
 
 # ---------------- CONFIG ----------------
 
-RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET")
+RAZORPAY_KEY_ID = os.environ.get("rzp_live_S4Sq8zIR6ztzan")
+RAZORPAY_KEY_SECRET = os.environ.get("PeSSCiHUbHMLudERgDiNdE9q")
 
 TWILIO_SID = os.environ.get("TWILIO_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
 WHATSAPP_FROM = "whatsapp:+14155238886"   # Twilio sandbox
-WHATSAPP_TO = os.environ.get("WHATSAPP_TO")
+WHATSAPP_TO = os.environ.get("+919713079285")
 
 # Razorpay client
 razor_client = None
@@ -236,3 +236,4 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
