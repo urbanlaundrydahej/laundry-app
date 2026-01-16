@@ -6,6 +6,14 @@ import sqlite3
 from datetime import datetime
 from twilio.rest import Client
 import os
+import razorpay
+
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET")
+
+razor_client = razorpay.Client(
+    auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)
+)
 
 TWILIO_SID = os.environ.get("TWILIO_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN")
@@ -116,6 +124,18 @@ def get_orders():
     cur.execute("SELECT * FROM orders ORDER BY id DESC")
     return cur.fetchall()
 
+@app.post("/create_payment")
+def create_payment(data: dict):
+    amount = int(data["amount"]) * 100  # paise
+
+    order = razor_client.order.create({
+        "amount": amount,
+        "currency": "INR",
+        "payment_capture": 1
+    })
+
+    return order
+
 @app.post("/update_status")
 def update_status(data: dict):
     cur.execute(
@@ -189,6 +209,7 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
 
 
