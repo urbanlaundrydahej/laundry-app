@@ -150,16 +150,20 @@ function continueOrder() {
   localStorage.setItem("pickup_date", date);
   localStorage.setItem("pickup_slot", slot.innerText);
 
+  console.log("TOTAL SENT:", total); // DEBUG
+
   fetch("/create_payment", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ amount: parseInt(total) })
+    body: JSON.stringify({
+      amount: Number(total)   // FORCE number
+    })
   })
   .then(r => r.json())
   .then(order => {
 
     var options = {
-      key: "rzp_live_S4Sq8zIR6ztzan",   // YOUR KEY
+      key: "rzp_live_S4Sq8zIR6ztzan",
       amount: order.amount,
       currency: "INR",
       name: "Laundry App",
@@ -169,24 +173,17 @@ function continueOrder() {
       handler: function (response){
         localStorage.setItem("payment_id", response.razorpay_payment_id);
         window.location.href = "/static/otp.html";
-      },
-
-      modal: {
-        ondismiss: function(){
-          alert("Payment cancelled");
-        }
       }
     };
 
     var rzp = new Razorpay(options);
     rzp.open();
-  })
-  .catch(() => {
-    alert("Payment gateway error");
   });
 }
+
 </script>
 
 </body>
 </html>
+
 
