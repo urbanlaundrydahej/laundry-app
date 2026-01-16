@@ -220,11 +220,11 @@ def update_laundry_name(data: dict):
 
 @app.post("/items/add")
 def add_item(data: dict):
-    cur.execute(
-        "INSERT INTO items (name, price, active)
-         VALUES (?, ?, 1)",
-        (data["name"], data["price"])
-    )
+    cur.execute("""
+        INSERT INTO items (name, price, active)
+        VALUES (?, ?, 1)
+    """, (data["name"], data["price"]))
+
     conn.commit()
     return {"message": "Item added"}
 
@@ -236,4 +236,5 @@ def delete_item(data: dict):
     )
     conn.commit()
     return {"message": "Item removed"}
+
 
