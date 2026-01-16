@@ -1,3 +1,4 @@
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,25 +135,37 @@ function selectSlot(el) {
 
 /* CONTINUE */
 function continueOrder() {
-  const date = document.getElementById("pickupDate").value;
-  const slot = document.querySelector(".slot.active");
 
-  if (!date) {
-    alert("Please select pickup date");
-    return;
-  }
-  if (!slot) {
-    alert("Please select pickup time slot");
-    return;
-  }
+  fetch("/create_payment", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      amount: total
+    })
+  })
+  .then(r => r.json())
+  .then(order => {
 
-  localStorage.setItem("pickup_date", date);
-  localStorage.setItem("pickup_slot", slot.innerText);
-  localStorage.setItem("total_amount", total);
+    var options = {
+      key: "YOUR_KEY_ID",
+      amount: order.amount,
+      currency: "INR",
+      name: "Laundry App",
+      description: "Laundry Order",
+      order_id: order.id,
 
-  window.location.href = "/static/otp.html";
+      handler: function (response){
+        localStorage.setItem("payment_id", response.razorpay_payment_id);
+        window.location.href = "/static/otp.html";
+      }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.open();
+  });
 }
-</script>
+
 
 </body>
 </html>
+
