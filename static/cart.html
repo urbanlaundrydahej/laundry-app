@@ -170,20 +170,32 @@ function continueOrder() {
       description: "Laundry Order",
       order_id: order.id,
 
-      handler: function (response){
-        localStorage.setItem("payment_id", response.razorpay_payment_id);
-        window.location.href = "/static/otp.html";
-      }
+handler: function (response){
+
+    const orderData = {
+        phone: localStorage.getItem("phone"),
+        address: localStorage.getItem("address"),
+        items: JSON.parse(localStorage.getItem("cart")),
+        pickup_date: localStorage.getItem("pickup_date"),
+        pickup_slot: localStorage.getItem("pickup_slot"),
+        payment_id: response.razorpay_payment_id
     };
 
-    var rzp = new Razorpay(options);
-    rzp.open();
-  });
+    fetch("/place_order", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(orderData)
+    })
+    .then(r => r.json())
+    .then(() => {
+        window.location.href = "/static/success.html";
+    });
 }
 
 </script>
 
 </body>
 </html>
+
 
 
