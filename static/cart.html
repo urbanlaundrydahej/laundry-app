@@ -153,7 +153,7 @@ function continueOrder() {
   fetch("/create_payment", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ amount: total })
+    body: JSON.stringify({ amount: parseInt(total) })
   })
   .then(r => r.json())
   .then(order => {
@@ -189,3 +189,4 @@ function continueOrder() {
 
 </body>
 </html>
+
